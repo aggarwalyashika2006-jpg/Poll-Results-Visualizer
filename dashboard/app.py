@@ -6,14 +6,28 @@ import matplotlib.pyplot as plt
 # PAGE CONFIG
 # -----------------------
 st.set_page_config(page_title="Poll Analytics Dashboard", layout="wide")
-
-st.title("📊 Poll Analytics Dashboard")
+st.markdown("""
+<style>
+.main-title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #2E86C1;
+}
+.section {
+    font-size: 22px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+</style>
+""", unsafe_allow_html=True)
+st.markdown('<p class="main-title">📊 Poll Analytics Dashboard</p>', unsafe_allow_html=True)
 st.write("Interactive Insights from Survey Data")
 
 # -----------------------
 # LOAD DATA
 # -----------------------
-df = pd.read_csv("data/poll_data.csv")
+with st.spinner("Loading data..."):
+    df = pd.read_csv("data/poll_data.csv")
 
 # -----------------------
 # SIDEBAR FILTERS
@@ -77,7 +91,9 @@ col1, col2 = st.columns(2)
 # Bar Chart
 with col1:
     fig, ax = plt.subplots(figsize=(4,3))
-    vote_counts.plot(kind='bar', ax=ax)
+    vote_counts.sort_values().plot(kind='bar', ax=ax)
+    ax.set_title("Vote Distribution")
+    ax.set_ylabel("Votes")
     plt.xticks(rotation=0)
     plt.tight_layout()
     st.pyplot(fig, use_container_width=False)
@@ -86,6 +102,8 @@ with col1:
 with col2:
     fig2, ax2 = plt.subplots(figsize=(4,3))
     vote_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax2)
+    ax2.set_ylabel("")
+    ax2.set_title("Vote Share")
     plt.tight_layout()
     st.pyplot(fig2, use_container_width=False)
 
@@ -136,6 +154,14 @@ st.download_button(
     file_name='filtered_data.csv',
     mime='text/csv'
 )
+st.subheader("🔍 Explore Specific Product")
+
+selected_choice = st.selectbox("Select Product", df["Choice"].unique())
+
+filtered_data = df[df["Choice"] == selected_choice]
+
+st.write(f"Showing data for {selected_choice}")
+st.dataframe(filtered_data.head(10))
 
 # -----------------------
 # INSIGHTS
@@ -144,5 +170,14 @@ st.subheader("🧠 Insights")
 
 top = vote_counts.idxmax()
 percent = (vote_counts.max() / len(df)) * 100
+st.subheader("📌 Key Insights")
+
+top_choice = vote_counts.idxmax()
+percentage = (vote_counts.max() / len(df)) * 100
+
+top_region = df["Region"].value_counts().idxmax()
+
+st.success(f"{top_choice} is leading with {percentage:.2f}% votes.")
+st.info(f"Most active region: {top_region}")
 
 st.success(f"{top} is leading with {percent:.2f}% votes.")
